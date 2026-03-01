@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operatie Sterfgeval — Statistisch Onderzoek</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&family=Oswald:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1410;
+    --paper: #f0e8d8;
+    --aged: #d4c4a0;
+    --red: #8b1a1a;
+    --red-bright: #c0392b;
+    --stamp: #7a1a1a;
+    --green: #2d5016;
+    --muted: #6b5d4e;
+    --shadow: rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0b08;
+    font-family: 'Courier Prime', monospace;
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noisy background texture */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 1000; opacity: 0.4;
+  }
+
+  /* ===== PAGES ===== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ===== INTRO PAGE ===== */
+  #page-intro {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .folder {
+    background: var(--paper);
+    max-width: 700px;
+    width: 100%;
+    padding: 3rem 3.5rem;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.3);
+    transform: rotate(-0.5deg);
+    animation: unfold 0.8s ease-out both;
+  }
+
+  @keyframes unfold {
+    from { transform: rotate(-0.5deg) translateY(30px); opacity: 0; }
+    to { transform: rotate(-0.5deg) translateY(0); opacity: 1; }
+  }
+
+  .folder::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: repeating-linear-gradient(90deg, var(--red) 0, var(--red) 8px, transparent 8px, transparent 16px);
+  }
+
+  .folder::after {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px solid rgba(139,90,43,0.3);
+    pointer-events: none;
+  }
+
+  .dossier-label {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .dossier-label .eyebrow {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .dossier-label h1 {
+    font-family: 'Special Elite', cursive;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    color: var(--ink);
+    line-height: 1.1;
+    margin: 0.5rem 0;
+  }
+
+  .stamp-geheim {
+    display: inline-block;
+    border: 3px solid var(--red);
+    color: var(--red);
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    padding: 0.2rem 1rem;
+    transform: rotate(-8deg);
+    opacity: 0.85;
+    margin: 0.5rem 0;
+    text-transform: uppercase;
+  }
+
+  .case-info {
+    font-size: 0.75rem;
+    color: var(--muted);
+    border-top: 1px solid var(--aged);
+    border-bottom: 1px solid var(--aged);
+    padding: 0.8rem 0;
+    margin: 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Courier Prime', monospace;
+  }
+
+  .intro-text {
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: #3a2e22;
+    margin-bottom: 1.5rem;
+  }
+
+  .intro-text strong { color: var(--red); }
+
+  /* Redacted text effect */
+  .redacted {
+    background: var(--ink);
+    color: transparent;
+    border-radius: 2px;
+    padding: 0 4px;
+    user-select: none;
+  }
+
+  .leerlingnummer-form {
+    margin: 2rem 0 1.5rem;
+  }
+
+  .leerlingnummer-form label {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .leerlingnummer-form input {
+    flex: 1;
+    background: white;
+    border: 2px solid var(--aged);
+    padding: 0.75rem 1rem;
+    font-family: 'Courier Prime', monospace;
+    font-size: 1.1rem;
+    color: var(--ink);
+    letter-spacing: 0.15em;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .leerlingnummer-form input:focus {
+    border-color: var(--red);
+  }
+
+  .btn {
+    background: var(--red);
+    color: var(--paper);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn:hover { background: var(--red-bright); }
+  .btn:active { transform: scale(0.98); }
+
+  .error-msg {
+    color: var(--red-bright);
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    display: none;
+  }
+
+  .download-section {
+    display: none;
+    background: #f7f0e3;
+    border: 1px dashed var(--aged);
+    padding: 1.2rem;
+    margin-top: 1.5rem;
+  }
+
+  .download-section h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.8rem;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--aged);
+    font-size: 0.85rem;
+  }
+
+  .file-item:last-child { border-bottom: none; }
+
+  .file-icon {
+    font-size: 1.2rem;
+  }
+
+  .file-item .file-name {
+    flex: 1;
+    font-family: 'Courier Prime', monospace;
+  }
+
+  .btn-small {
+    background: var(--green);
+    color: white;
+    border: none;
+    padding: 0.3rem 0.8rem;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-small:hover { opacity: 0.85; }
+
+  .week-nav {
+    display: none;
+    margin-top: 2rem;
+    border-top: 2px solid var(--ink);
+    padding-top: 1.5rem;
+  }
+
+  .week-nav h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .week-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+
+  .week-card {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    text-align: center;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .week-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--red);
+    transform: translateY(100%);
+    transition: transform 0.2s;
+    z-index: 0;
+  }
+
+  .week-card:hover::after { transform: translateY(0); }
+  .week-card > * { position: relative; z-index: 1; }
+
+  .week-card .week-num {
+    font-family: 'Oswald', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .week-card .week-title {
+    font-size: 0.7rem;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-top: 0.3rem;
+  }
+
+  .week-card .week-status {
+    font-size: 0.65rem;
+    margin-top: 0.5rem;
+    opacity: 0.5;
+  }
+
+  /* ===== WEEK PAGES ===== */
+  .week-page {
+    min-height: 100vh;
+    background: #0d0b08;
+    padding: 2rem;
+  }
+
+  .week-header {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+  }
+
+  .back-btn {
+    background: none;
+    border: 1px solid #444;
+    color: #999;
+    padding: 0.4rem 0.8rem;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    margin-top: 0.5rem;
+  }
+  .back-btn:hover { border-color: var(--paper); color: var(--paper); }
+
+  .week-title-block { flex: 1; }
+
+  .week-title-block .week-eyebrow {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.4em;
+    color: #666;
+    text-transform: uppercase;
+  }
+
+  .week-title-block h2 {
+    font-family: 'Special Elite', cursive;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    color: var(--paper);
+    margin: 0.3rem 0 0.5rem;
+  }
+
+  .week-title-block .week-subtitle {
+    color: var(--red-bright);
+    font-size: 0.85rem;
+    font-family: 'Courier Prime', monospace;
+  }
+
+  .content-grid {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .dossier-card {
+    background: var(--paper);
+    padding: 2rem;
+    position: relative;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
+
+  .dossier-card::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -0.6rem;
+    left: 1.5rem;
+    background: var(--red);
+    color: white;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.6rem;
+  }
+
+  .dossier-card h3 {
+    font-family: 'Special Elite', cursive;
+    font-size: 1.2rem;
+    color: var(--ink);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--aged);
+  }
+
+  .dossier-card p {
+    font-size: 0.88rem;
+    line-height: 1.8;
+    color: #3a2e22;
+    margin-bottom: 0.75rem;
+  }
+
+  .dossier-card p:last-child { margin-bottom: 0; }
+
+  .task-list {
+    list-style: none;
+    margin: 0.75rem 0;
+  }
+
+  .task-list li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.6rem 0;
+    border-bottom: 1px dashed var(--aged);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #3a2e22;
+  }
+
+  .task-list li:last-child { border-bottom: none; }
+
+  .task-num {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    width: 1.4rem;
+    height: 1.4rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .clue-box {
+    background: #fff8ee;
+    border-left: 4px solid var(--red);
+    padding: 0.8rem 1rem;
+    margin: 0.75rem 0;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: #4a3a28;
+  }
+
+  .clue-box strong {
+    font-style: normal;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    color: var(--red);
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+
+  .formula-box {
+    background: white;
+    border: 1px solid var(--aged);
+    padding: 0.75rem 1rem;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.9rem;
+    color: var(--green);
+    margin: 0.5rem 0;
+    letter-spacing: 0.05em;
+  }
+
+  .data-preview {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+    font-family: 'Courier Prime', monospace;
+    margin-top: 0.75rem;
+  }
+
+  .data-preview th {
+    background: var(--ink);
+    color: var(--aged);
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .data-preview td {
+    padding: 0.35rem 0.6rem;
+    border-bottom: 1px solid var(--aged);
+    color: #3a2e22;
+  }
+
+  .data-preview tr:nth-child(even) td { background: rgba(0,0,0,0.04); }
+
+  .highlight-row td { background: #ffe8e8 !important; font-weight: bold; color: var(--red) !important; }
+
+  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+  .week-progress {
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .progress-dot {
+    flex: 1; height: 4px;
+    background: #333;
+    transition: background 0.3s;
+  }
+  .progress-dot.active { background: var(--red-bright); }
+
+  /* Typewriter effect */
+  .typewriter {
+    overflow: hidden;
+    border-right: 2px solid var(--red);
+    white-space: nowrap;
+    animation: typing 2s steps(40, end), blink-caret 0.75s step-end infinite;
+    width: fit-content;
+  }
+
+  @keyframes typing { from { width: 0 } to { width: 100% } }
+  @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: var(--red); } }
+
+  /* Fingerprint watermark */
+  .fp-watermark {
+    position: absolute;
+    bottom: 1rem;
+    right: 1.5rem;
+    opacity: 0.06;
+    font-size: 4rem;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  @media (max-width: 600px) {
+    .folder { padding: 2rem 1.5rem; }
+    .week-cards { grid-template-columns: 1fr; }
+    .cols-2 { grid-template-columns: 1fr; }
+    .input-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== PAGE 0: INTRO ===== -->
+<div id="page-intro" class="page active">
+  <div class="folder">
+    <div class="fp-watermark">🔍</div>
+    <div class="dossier-label">
+      <div class="eyebrow">Ministerie van Justitie — Forensische Statistiek</div>
+      <h1>Operatie<br>Sterfgeval</h1>
+      <div class="stamp-geheim">Vertrouwelijk</div>
+    </div>
+
+    <div class="case-info">
+      <span>Zaak nr: OPS-2024-047</span>
+      <span>Ziekenhuis De Beemsterhof</span>
+      <span>Status: Actief onderzoek</span>
+    </div>
+
+    <div class="intro-text">
+      <p>Beste rechercheur,</p>
+      <br>
+      <p>In Ziekenhuis De Beemsterhof is iets grondig mis. Het sterftecijfer op afdeling <strong>C-3 (Interne Geneeskunde)</strong> ligt de afgelopen drie maanden <strong>beduidend hoger</strong> dan verwacht — maar alleen in bepaalde diensten.</p>
+      <br>
+      <p>Het gaat om <span class="redacted">███ ███████</span>, een arts die al eerder onder een vergrootglas lag. Of is er iets anders aan de hand? De statistieken liegen niet — maar ze vertellen ook niet het hele verhaal.</p>
+      <br>
+      <p><strong>Jouw taak:</strong> Analyseer de data van drie weken. Bereken, visualiseer, en trek je conclusie. Is er sprake van een patroon? En zo ja — wat betekent dat?</p>
+    </div>
+
+    <div class="leerlingnummer-form">
+      <label>Voer je leerlingnummer in om je persoonlijke dataset te ontvangen</label>
+      <div class="input-row">
+        <input type="text" id="leerlingnummer-input" placeholder="bijv. 2024-0847" maxlength="12"
+               onkeydown="if(event.key==='Enter') activeerDataset()">
+        <button class="btn" onclick="activeerDataset()">▶ Toegang</button>
+      </div>
+      <div class="error-msg" id="error-msg">Voer een geldig leerlingnummer in (4–10 tekens)</div>
+    </div>
+
+    <div class="download-section" id="download-section">
+      <h3>📁 Jouw bestanden — Leerling <span id="ln-display"></span></h3>
+      <div class="file-item">
+        <span class="file-icon">📊</span>
+        <span class="file-name">Dataset_BeemsterhofC3_<span class="ln-inline"></span>.xlsx</span>
+        <button class="btn-small" onclick="downloadDataset()">↓ Download Excel</button>
+      </div>
+      <div class="file-item">
+        <span class="file-icon">📄</span>
+        <span class="file-name">Instructies_Operatie_Sterfgeval.pdf</span>
+        <button class="btn-small" onclick="alert('PDF downloaden: in productie koppelen aan server')">↓ Download PDF</button>
+      </div>
+    </div>
+
+    <div class="week-nav" id="week-nav">
+      <h3>Kies je onderzoeksweek</h3>
+      <div class="week-cards">
+        <div class="week-card" onclick="gaNaar('week1')">
+          <div class="week-num">01</div>
+          <div class="week-title">Basisanalyse</div>
+          <div class="week-status">Gemiddelde · Min · Max</div>
+        </div>
+        <div class="week-card" onclick="gaNaar('week2')">
+          <div class="week-num">02</div>
+          <div class="week-title">Verbanden</div>
+          <div class="week-status">Formules · Draaitabel</div>
+        </div>
+        <div class="week-card" onclick="gaNaar('week3')">
+          <div class="week-num">03</div>
+          <div class="week-title">Visualisatie</div>
+          <div class="week-status">Grafieken · Conclusie</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE WEEK 1 ===== -->
+<div id="page-week1" class="page">
+  <div class="week-page">
+    <div class="week-progress">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+    </div>
+    <div class="week-header">
+      <button class="back-btn" onclick="gaNaar('intro')">← Terug naar dossier</button>
+      <div class="week-title-block">
+        <div class="week-eyebrow">Week 1 van 3</div>
+        <h2>De Eerste Cijfers</h2>
+        <div class="week-subtitle">»&nbsp;Iets klopt niet in de sterftecijfers van dienst C-3&nbsp;«</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+
+      <div class="dossier-card" data-label="Context">
+        <div class="fp-watermark">☠</div>
+        <h3>Wat zegt het dossier?</h3>
+        <p>Jij bent aangesteld als forensisch statisticus. Je hebt de ziekenhuisdata van afdeling C-3 ontvangen over de afgelopen 12 weken. Elke rij in jouw dataset beschrijft één patiëntenmoment: een tijdstip, een dienst, een arts, een verpleegkundige, en de uitkomst voor de patiënt.</p>
+        <div class="clue-box">
+          <strong>🔍 Aanwijzing van de hoofdrechercheur</strong>
+          Kijk goed naar het gemiddeld aantal patiënten <em>per dienst</em>. Wijkt één dienst significant af? En wat is het maximum aantal sterfgevallen op één dag?
+        </div>
+        <p>Open je Excel-dataset en begin met de basisanalyse. Gebruik de tabelfuncties van Excel — dat maakt het overzichtelijker en makkelijker om later te filteren.</p>
+      </div>
+
+      <div class="cols-2">
+        <div class="dossier-card" data-label="Jouw Dataset">
+          <h3>Structuur van de data</h3>
+          <table class="data-preview">
+            <thead>
+              <tr>
+                <th>Kolom</th><th>Inhoud</th><th>Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>A</td><td>Datum</td><td>datum</td></tr>
+              <tr><td>B</td><td>Tijdstip</td><td>tijd</td></tr>
+              <tr><td>C</td><td>Dienst</td><td>tekst</td></tr>
+              <tr><td>D</td><td>Arts</td><td>tekst</td></tr>
+              <tr><td>E</td><td>Verpleegkundige</td><td>tekst</td></tr>
+              <tr><td>F</td><td>Aantal patiënten</td><td>getal</td></tr>
+              <tr><td>G</td><td>Ontslagen</td><td>getal</td></tr>
+              <tr><td>H</td><td>Stabiel</td><td>getal</td></tr>
+              <tr class="highlight-row"><td>I</td><td>Overlijden</td><td>getal</td></tr>
+              <tr><td>J</td><td>Overlijdenskans</td><td>%</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="dossier-card" data-label="Opdrachten Week 1">
+          <h3>Opdrachten</h3>
+          <ul class="task-list">
+            <li>
+              <div class="task-num">1</div>
+              <div>Maak van je data een <strong>Excel-tabel</strong> (Ctrl+T). Geef de tabel de naam <em>Beemsterhof</em>.</div>
+            </li>
+            <li>
+              <div class="task-num">2</div>
+              <div>Bereken het <strong>gemiddeld aantal patiënten</strong> per dienst met <code>=GEMIDDELDE(...)</code>. Noteer de uitkomst.</div>
+            </li>
+            <li>
+              <div class="task-num">3</div>
+              <div>Bepaal het <strong>maximum</strong> en <strong>minimum</strong> aantal overlijdens per dag met <code>=MAX(...)</code> en <code>=MIN(...)</code>.</div>
+            </li>
+            <li>
+              <div class="task-num">4</div>
+              <div>Gebruik <strong>AutoFilter</strong> op kolom D (Arts). Welke arts heeft de hoogste gemiddelde overlijdenskans in zijn/haar diensten?</div>
+            </li>
+            <li>
+              <div class="task-num">5</div>
+              <div>Vul het <strong>antwoordformulier</strong> in dat je bij je dataset hebt ontvangen. Sla je Excel-bestand op als <em>Week1_[leerlingnummer].xlsx</em>.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="dossier-card" data-label="Formules Naslagwerk">
+        <h3>Handige Excel-formules voor week 1</h3>
+        <div class="formula-box">=GEMIDDELDE(Beemsterhof[Aantal patiënten])</div>
+        <div class="formula-box">=GEMIDDELDE(ALS(Beemsterhof[Arts]="Dr. Vermeer"; Beemsterhof[Overlijden]))</div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:0.3rem">↑ Dit is een matrixformule: afsluiten met Ctrl+Shift+Enter (oudere Excel) of gewoon Enter (Excel 365)</p>
+        <div class="formula-box">=MAX(Beemsterhof[Overlijden])</div>
+        <div class="formula-box">=MIN(Beemsterhof[Overlijden])</div>
+        <div class="formula-box">=AANTAL.ALS(Beemsterhof[Dienst];"Nachtdienst")</div>
+        <div class="clue-box">
+          <strong>💡 Tip</strong>
+          Als het maximum aantal overlijdens op één dag veel hoger is dan het gemiddelde, is dat statistisch opvallend. Schrijf dit op — je hebt het nodig in week 3!
+        </div>
+      </div>
+
+      <div class="dossier-card" data-label="Inleveren">
+        <h3>Inleveren & doorgaan</h3>
+        <p>Lever je ingevulde antwoordformulier en je Excel-bestand in via de digitale leeromgeving vóór het einde van week 1.</p>
+        <p>Na goedkeuring van je docent kun je beginnen met <strong>Week 2 — Verbanden leggen</strong>.</p>
+        <div style="margin-top:1rem">
+          <button class="btn" onclick="gaNaar('week2')" style="margin-right:0.5rem">→ Ga naar Week 2</button>
+          <button class="btn" onclick="gaNaar('intro')" style="background:var(--muted)">← Terug naar dossier</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE WEEK 2 ===== -->
+<div id="page-week2" class="page">
+  <div class="week-page">
+    <div class="week-progress">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot"></div>
+    </div>
+    <div class="week-header">
+      <button class="back-btn" onclick="gaNaar('intro')">← Terug naar dossier</button>
+      <div class="week-title-block">
+        <div class="week-eyebrow">Week 2 van 3</div>
+        <h2>Verbanden Leggen</h2>
+        <div class="week-subtitle">»&nbsp;Het patroon begint zichtbaar te worden&nbsp;«</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+
+      <div class="dossier-card" data-label="Verhaal vervolg">
+        <div class="fp-watermark">⚖</div>
+        <h3>Nieuwe informatie in het dossier</h3>
+        <p>De afdeling heeft gereageerd op de eerste bevindingen. Hoofdarts De Wit wijst erop dat de bezettingsgraad van de afdeling sterk wisselt. <em>"Meer patiënten betekent logischerwijs meer risico"</em>, zegt hij. Klopt dat argument statistisch?</p>
+        <div class="clue-box">
+          <strong>🔍 Aanwijzing van de hoofdrechercheur</strong>
+          Bereken de verhouding: overlijdens ÷ aantal patiënten. Als die verhouding bij één arts consequent hoger is — ook bij gelijk aantal patiënten — dan klopt het argument van De Wit niet.
+        </div>
+        <p>In deze week stel je formules op om verbanden te onderzoeken, en maak je een <strong>draaitabel</strong> waarmee je snel kunt filteren op arts, dienst en tijdstip.</p>
+      </div>
+
+      <div class="cols-2">
+        <div class="dossier-card" data-label="Opdrachten Week 2">
+          <h3>Opdrachten</h3>
+          <ul class="task-list">
+            <li>
+              <div class="task-num">1</div>
+              <div>Voeg in kolom K een nieuwe kolom toe: <strong>Sterftequotiënt</strong>. Gebruik de formule <code>=I2/F2</code> en vul door naar beneden.</div>
+            </li>
+            <li>
+              <div class="task-num">2</div>
+              <div>Stel een formule op die het <strong>gemiddeld sterftequotiënt per arts</strong> berekent. Gebruik ALS.GEMIDDELDE.</div>
+            </li>
+            <li>
+              <div class="task-num">3</div>
+              <div>Maak een <strong>draaitabel</strong> (Invoegen → Draaitabel) met: Rijen = Arts, Kolommen = Dienst, Waarden = Som van Overlijden en Gemiddelde van Sterftequotiënt.</div>
+            </li>
+            <li>
+              <div class="task-num">4</div>
+              <div>Voeg een <strong>tijdlijnfilter</strong> toe aan de draaitabel op basis van de datumkolom. Filter op de laatste 4 weken.</div>
+            </li>
+            <li>
+              <div class="task-num">5</div>
+              <div>Beantwoord: klopt het argument van hoofdarts De Wit? Onderbouw met je draaitabeldata.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="dossier-card" data-label="Formules Week 2">
+          <h3>Formules voor week 2</h3>
+          <div class="formula-box">=ALS.GEMIDDELDE(D:D;"Dr. Vermeer";K:K)</div>
+          <p style="font-size:0.78rem;color:var(--muted);margin:0.3rem 0 0.75rem">↑ Sterftequotiënt voor één specifieke arts</p>
+          <div class="formula-box">=ALS(F2=0;"n.v.t.";I2/F2)</div>
+          <p style="font-size:0.78rem;color:var(--muted);margin:0.3rem 0 0.75rem">↑ Sterftequotiënt met foutafvang (deling door 0)</p>
+          <div class="formula-box">=AANTAL.ALS(D:D;D2)</div>
+          <p style="font-size:0.78rem;color:var(--muted);margin:0.3rem 0 0.75rem">↑ Hoeveel diensten heeft een arts in totaal gedraaid?</p>
+          <div class="clue-box">
+            <strong>💡 Draaitabel instellen</strong>
+            Zet het quotiënt op "Gemiddelde" (niet "Som") in het waardenvenster — klik op het veld en kies "Waardeveldinstellingen".
+          </div>
+        </div>
+      </div>
+
+      <div class="dossier-card" data-label="Voorbeeld Draaitabel">
+        <h3>Zo zou jouw draaitabel er uit kunnen zien</h3>
+        <table class="data-preview">
+          <thead>
+            <tr><th>Arts ↓ / Dienst →</th><th>Ochtenddienst</th><th>Middagdienst</th><th>Nachtdienst</th><th>Totaal</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Dr. Bakker</td><td>0.021</td><td>0.019</td><td>0.023</td><td>0.021</td></tr>
+            <tr><td>Dr. Jansen</td><td>0.018</td><td>0.022</td><td>0.020</td><td>0.020</td></tr>
+            <tr class="highlight-row"><td>Dr. Vermeer</td><td>0.071</td><td>0.069</td><td>0.074</td><td>0.071</td></tr>
+            <tr><td>Dr. De Vries</td><td>0.020</td><td>0.018</td><td>0.022</td><td>0.020</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem">* Dit zijn fictieve voorbeeldwaarden. Jouw dataset geeft andere uitkomsten.</p>
+        <div class="clue-box">
+          <strong>🔍 Let op dit patroon</strong>
+          Als de afwijking bij één arts in <em>alle</em> diensten zichtbaar is — ochtend, middag én nacht — dan is de dienstroostering waarschijnlijk niet de oorzaak.
+        </div>
+      </div>
+
+      <div class="dossier-card" data-label="Inleveren">
+        <h3>Inleveren & doorgaan</h3>
+        <p>Lever je draaitabel en beantwoorde vragen in. In week 3 maak je grafieken en trek je de uiteindelijke conclusie.</p>
+        <div style="margin-top:1rem">
+          <button class="btn" onclick="gaNaar('week3')" style="margin-right:0.5rem">→ Ga naar Week 3</button>
+          <button class="btn" onclick="gaNaar('intro')" style="background:var(--muted)">← Terug naar dossier</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE WEEK 3 ===== -->
+<div id="page-week3" class="page">
+  <div class="week-page">
+    <div class="week-progress">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+    </div>
+    <div class="week-header">
+      <button class="back-btn" onclick="gaNaar('intro')">← Terug naar dossier</button>
+      <div class="week-title-block">
+        <div class="week-eyebrow">Week 3 van 3</div>
+        <h2>Het Oordeel</h2>
+        <div class="week-subtitle">»&nbsp;Jij sluit het dossier — wat is jouw conclusie?&nbsp;«</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+
+      <div class="dossier-card" data-label="Afsluitend verhaal">
+        <div class="fp-watermark">📋</div>
+        <h3>De officier van justitie wacht op jouw rapport</h3>
+        <p>Je hebt twee weken aan dit dossier gewerkt. Je hebt basisstatistieken berekend en verbanden gelegd. Nu is het tijd voor het laatste en misschien wel moeilijkste onderdeel: de data visualiseren en een <strong>onderbouwde conclusie</strong> trekken.</p>
+        <p>Een goed forensisch rapport bevat altijd grafieken. Niet om het mooier te maken — maar omdat visualisatie patronen zichtbaar maakt die in een tabel verborgen blijven.</p>
+        <div class="clue-box">
+          <strong>🔍 Centrale vraag</strong>
+          Is er statistisch bewijs dat één specifieke arts verantwoordelijk is voor de verhoogde sterfte op afdeling C-3? Of zijn er alternatieve verklaringen?
+        </div>
+      </div>
+
+      <div class="dossier-card" data-label="Opdrachten Week 3">
+        <h3>Opdrachten</h3>
+        <ul class="task-list">
+          <li>
+            <div class="task-num">1</div>
+            <div><strong>Boxplot:</strong> Maak een boxplot van het sterftequotiënt (kolom K) per arts. Gebruik Invoegen → Grafiek → Doos en Snorhaar. Welke arts heeft de grootste spreiding? En de hoogste mediaan?</div>
+          </li>
+          <li>
+            <div class="task-num">2</div>
+            <div><strong>Staafdiagram:</strong> Maak een gegroepeerd staafdiagram: X-as = Arts, Y-as = gemiddeld sterftequotiënt per dienst (ochtend/middag/nacht). Geef het diagram een duidelijke titel en asbenamingen.</div>
+          </li>
+          <li>
+            <div class="task-num">3</div>
+            <div><strong>Lijndiagram:</strong> Maak een lijndiagram met op de X-as de datum en op de Y-as het totaal aantal overlijdens per dag. Kleur de datapunten rood als dr. Vermeer dienst had.</div>
+          </li>
+          <li>
+            <div class="task-num">4</div>
+            <div><strong>Conclusie:</strong> Schrijf een conclusietekst van 150–250 woorden. Gebruik de structuur hieronder. Onderbouw elke claim met een getal of grafiek uit jouw analyse.</div>
+          </li>
+          <li>
+            <div class="task-num">5</div>
+            <div>Sla je eindbestand op als <em>Rapport_Sterfgeval_[leerlingnummer].xlsx</em> en lever in via de leeromgeving.</div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="cols-2">
+        <div class="dossier-card" data-label="Boxplot — wat zie je?">
+          <h3>Uitleg boxplot</h3>
+          <p>Een boxplot laat de <strong>spreiding</strong> van data zien:</p>
+          <ul class="task-list" style="margin-top:0.5rem">
+            <li><div class="task-num" style="background:#555">Q1</div><div>25% van de waarden ligt hieronder (onderste kwartiel)</div></li>
+            <li><div class="task-num" style="background:#555">M</div><div>Mediaan — de middelste waarde</div></li>
+            <li><div class="task-num" style="background:#555">Q3</div><div>75% van de waarden ligt hieronder (bovenste kwartiel)</div></li>
+            <li><div class="task-num" style="background:var(--red)">!</div><div>Uitschieters buiten de snorharen zijn statistisch opvallend</div></li>
+          </ul>
+          <div class="clue-box">
+            <strong>💡 Interpretatietip</strong>
+            Als de boxplot van één arts helemaal bovenaan staat én weinig overlap heeft met de rest, is het patroon statistisch sterk.
+          </div>
+        </div>
+
+        <div class="dossier-card" data-label="Conclusiestructuur">
+          <h3>Schrijf je conclusie zo</h3>
+          <ul class="task-list">
+            <li><div class="task-num">§1</div><div><strong>Bevinding:</strong> Beschrijf in één zin wat je ziet in de data.</div></li>
+            <li><div class="task-num">§2</div><div><strong>Bewijs:</strong> Noem minimaal twee specifieke getallen of grafieken die dit ondersteunen.</div></li>
+            <li><div class="task-num">§3</div><div><strong>Alternatieve verklaring:</strong> Bespreek één mogelijke andere oorzaak.</div></li>
+            <li><div class="task-num">§4</div><div><strong>Oordeel:</strong> Voldoet de statistische analyse als bewijs? Waarom wel of niet?</div></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="dossier-card" data-label="Achtergrondinformatie">
+        <h3>De werkelijkheid achter de whodunit</h3>
+        <p>Dit scenario is gebaseerd op een echte Nederlandse rechtszaak: de zaak van <strong>Lucia de Berk</strong> (2003–2010). Lucia was een verpleegkundige die in eerste instantie werd veroordeeld voor moord, mede op basis van statistisch bewijs. Later bleek dat de statistieken verkeerd waren geïnterpreteerd.</p>
+        <p>Haar veroordeling werd herzien nadat statistici aantoonden dat de kans op zo'n patroon veel groter was dan de rechtbank had aangenomen. In 2010 werd ze volledig vrijgesproken.</p>
+        <div class="clue-box">
+          <strong>🔍 Discussievraag</strong>
+          Statistisch bewijs is nooit 100% zeker. Wanneer is een statistisch patroon sterk genoeg om iemand op te veroordelen? En wie is verantwoordelijk als de statistiek klopt maar de conclusie fout is?
+        </div>
+        <p>Jouw dataset is fictief en speciaal voor jou gegenereerd. Maar de vragen die je stelt, zijn dezelfde die echte forensische statistici stellen.</p>
+      </div>
+
+      <div class="dossier-card" data-label="Inleveren & Afsluiten">
+        <h3>Gefeliciteerd — het dossier is gesloten</h3>
+        <p>Je hebt drie weken lang gewerkt als forensisch statisticus. Je hebt data geanalyseerd, formules opgesteld, een draaitabel gemaakt en grafieken gecreëerd.</p>
+        <p>Lever je eindrapport in en wacht op de beoordeling van je docent. De officier van justitie neemt je bevindingen mee in zijn afweging.</p>
+        <div style="margin-top:1.5rem; text-align:center">
+          <div class="stamp-geheim" style="transform:rotate(5deg); display:inline-block; font-size:1.5rem; padding:0.5rem 2rem">
+            Dossier gesloten
+          </div>
+        </div>
+        <div style="margin-top:1.5rem">
+          <button class="btn" onclick="gaNaar('intro')" style="background:var(--muted)">← Terug naar het dossier</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let huidigLeerlingnummer = '';
+
+function activeerDataset() {
+  const input = document.getElementById('leerlingnummer-input').value.trim();
+  const errorMsg = document.getElementById('error-msg');
+  
+  if (input.length < 4) {
+    errorMsg.style.display = 'block';
+    return;
+  }
+  
+  errorMsg.style.display = 'none';
+  huidigLeerlingnummer = input;
+  
+  // Update displays
+  document.getElementById('ln-display').textContent = input;
+  document.querySelectorAll('.ln-inline').forEach(el => el.textContent = input);
+  
+  // Show sections
+  document.getElementById('download-section').style.display = 'block';
+  document.getElementById('week-nav').style.display = 'block';
+  
+  // Scroll into view
+  document.getElementById('download-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function gaNaar(pagina) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const doel = document.getElementById('page-' + pagina);
+  if (doel) {
+    doel.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function downloadDataset() {
+  if (!huidigLeerlingnummer) return;
+  
+  // Generate a seeded dataset based on student number
+  const seed = hashCode(huidigLeerlingnummer);
+  const csvData = generateDataset(seed, huidigLeerlingnummer);
+  
+  const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Dataset_BeemsterhofC3_${huidigLeerlingnummer}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function seededRand(seed, idx) {
+  const x = Math.sin(seed * 9301 + idx * 49297 + 233) * 10000;
+  return x - Math.floor(x);
+}
+
+function generateDataset(seed, ln) {
+  const artsen = ['Dr. Bakker', 'Dr. Jansen', 'Dr. Vermeer', 'Dr. De Vries'];
+  const verpleegkundigen = ['V. Smits', 'V. Peters', 'V. Hendriks', 'V. Wolters', 'V. Claassen'];
+  const diensten = ['Ochtenddienst (07:00-15:00)', 'Middagdienst (15:00-23:00)', 'Nachtdienst (23:00-07:00)'];
+  const diensttijden = ['07:00', '15:00', '23:00'];
+  
+  // Suspect arts: index based on seed so each student may have different suspect
+  const verdachteIdx = seed % 3; // 0=Bakker, 1=Jansen, 2=Vermeer (Vermeer most common)
+  
+  let rows = ['Datum,Tijdstip,Dienst,Arts,Verpleegkundige,Aantal_patienten,Ontslagen,Stabiel,Overlijden,Overlijdenskans'];
+  
+  const startDate = new Date('2024-01-08');
+  let rowIdx = 0;
+  
+  for (let dag = 0; dag < 84; dag++) { // 12 weken
+    const datum = new Date(startDate);
+    datum.setDate(datum.getDate() + dag);
+    const datumStr = datum.toLocaleDateString('nl-NL', { day:'2-digit', month:'2-digit', year:'numeric' });
+    
+    for (let d = 0; d < 3; d++) { // 3 diensten per dag
+      const artsIdx = Math.floor(seededRand(seed, rowIdx++) * artsen.length);
+      const arts = artsen[artsIdx];
+      const vplkIdx = Math.floor(seededRand(seed, rowIdx++) * verpleegkundigen.length);
+      const verpleegkundige = verpleegkundigen[vplkIdx];
+      
+      const aantalPatienten = 8 + Math.floor(seededRand(seed, rowIdx++) * 15);
+      
+      // Suspect has higher death rate
+      const isVerdacht = (artsIdx === verdachteIdx);
+      const basisKans = isVerdacht ? 0.06 + seededRand(seed, rowIdx++) * 0.02 
+                                   : 0.01 + seededRand(seed, rowIdx++) * 0.025;
+      
+      let overlijden = 0;
+      for (let p = 0; p < aantalPatienten; p++) {
+        if (seededRand(seed, rowIdx++) < basisKans) overlijden++;
+      }
+      
+      const ontslagen = Math.floor(seededRand(seed, rowIdx++) * Math.min(4, aantalPatienten - overlijden));
+      const stabiel = aantalPatienten - overlijden - ontslagen;
+      const kans = (basisKans * 100).toFixed(1) + '%';
+      
+      rows.push(`${datumStr},${diensttijden[d]},${diensten[d]},"${arts}","${verpleegkundige}",${aantalPatienten},${ontslagen},${stabiel},${overlijden},${kans}`);
+    }
+  }
+  
+  return rows.join('\n');
+}
+</script>
+</body>
+</html>
